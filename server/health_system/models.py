@@ -34,3 +34,17 @@ class Program(db.Model):
     
     def __repr__(self):
         return f'<Program {self.name}>'
+
+
+class Enrollment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    program_id = db.Column(db.Integer, db.ForeignKey('program.id'), nullable=False)
+    enrollment_date = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='Active')  # Active, Completed, Suspended
+    
+    # Ensure a client can only be enrolled once in a program
+    __table_args__ = (db.UniqueConstraint('client_id', 'program_id'),)
+    
+    def __repr__(self):
+        return f'<Enrollment client_id={self.client_id} program_id={self.program_id}>'
