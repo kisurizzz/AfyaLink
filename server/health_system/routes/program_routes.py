@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, Program
 from sqlalchemy.exc import IntegrityError
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class ProgramResource(Resource):
     def __init__(self):
@@ -18,6 +19,7 @@ class ProgramResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def post(self):
         """
         Create a new health program
@@ -28,13 +30,17 @@ class ProgramResource(Resource):
         }
         """
         try:
+            # Get the current user's ID
+            current_user_id = get_jwt_identity()
+            
             # Parse and validate the request data
             args = self.parser.parse_args()
             
             # Create new program
             program = Program(
                 name=args['name'],
-                description=args.get('description', '')
+                description=args.get('description', ''),
+                created_by=current_user_id
             )
             
             db.session.add(program)

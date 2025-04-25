@@ -2,8 +2,8 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, SystemUser
 import bcrypt
-import jwt
-from datetime import datetime, timedelta
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta, UTC
 from functools import wraps
 import os
 
@@ -17,16 +17,9 @@ JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
-        
-        if not token:
-            return {'message': 'Token is missing'}, 401
-        
         try:
-            data = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
-            current_user = SystemUser.query.get(data['user_id'])
+            current_user_id = get_jwt_identity()
+            current_user = SystemUser.query.get(current_user_id)
             if not current_user:
                 return {'message': 'Invalid token'}, 401
         except:
@@ -79,8 +72,7 @@ class DoctorResource(Resource):
             user = SystemUser(
                 username=args['username'],
                 password=hashed_password.decode('utf-8'),
-                email=args['email'],
-                role='doctor'  # Always set role as doctor
+                email=args['email']
             )
             
             db.session.add(user)
@@ -131,18 +123,14 @@ class DoctorLoginResource(Resource):
                 return self.error_response("Invalid username or password", 401)
             
             # Update last login
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(UTC)
             db.session.commit()
             
             # Generate JWT token
-            token = jwt.encode({
-                'user_id': user.id,
-                'username': user.username,
-                'exp': datetime.utcnow() + JWT_ACCESS_TOKEN_EXPIRES
-            }, JWT_SECRET_KEY)
+            access_token = create_access_token(identity=user.id)
             
             return self.success_response({
-                'token': token,
+                'token': access_token,
                 'user': {
                     'username': user.username,
                     'email': user.email

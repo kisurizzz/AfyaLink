@@ -3,6 +3,7 @@ from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class ClientResource(Resource):
     def __init__(self):
@@ -24,6 +25,7 @@ class ClientResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def post(self):
         """
         Register a new client
@@ -39,6 +41,9 @@ class ClientResource(Resource):
         }
         """
         try:
+            # Get the current user's ID
+            current_user_id = get_jwt_identity()
+            
             # Parse and validate the request data
             args = self.parser.parse_args()
             
@@ -56,7 +61,8 @@ class ClientResource(Resource):
                 gender=args['gender'],
                 contact_number=args.get('contact_number'),
                 email=args.get('email'),
-                address=args.get('address')
+                address=args.get('address'),
+                created_by=current_user_id
             )
             
             db.session.add(client)

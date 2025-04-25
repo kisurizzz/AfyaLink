@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from sqlalchemy.exc import IntegrityError
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class EnrollmentResource(Resource):
     def __init__(self):
@@ -18,6 +19,7 @@ class EnrollmentResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def post(self):
         """
         Enroll a client in one or more programs
@@ -28,6 +30,9 @@ class EnrollmentResource(Resource):
         }
         """
         try:
+            # Get the current user's ID
+            current_user_id = get_jwt_identity()
+            
             # Parse and validate the request data
             args = self.parser.parse_args()
             
@@ -41,7 +46,11 @@ class EnrollmentResource(Resource):
                 if not program:
                     return self.error_response(f"Program with ID {program_id} not found", 404)
                 
-                enrollment = Enrollment(client_id=client.id, program_id=program.id)
+                enrollment = Enrollment(
+                    client_id=client.id, 
+                    program_id=program.id,
+                    created_by=current_user_id
+                )
                 enrollments.append(enrollment)
             
             db.session.add_all(enrollments)
