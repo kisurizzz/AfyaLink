@@ -1,9 +1,14 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from models import db, Program
 from sqlalchemy.exc import IntegrityError
 
 class ProgramResource(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('name', type=str, required=True, help='Program name is required')
+        self.parser.add_argument('description', type=str, required=False)
+
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
 
@@ -22,18 +27,19 @@ class ProgramResource(Resource):
             "description": "Program Description"
         }
         """
-        data = request.get_json()
-        
-        if not data or 'name' not in data:
-            return self.error_response("Program name is required")
-        
         try:
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
+            # Create new program
             program = Program(
-                name=data['name'],
-                description=data.get('description', '')
+                name=args['name'],
+                description=args.get('description', '')
             )
+            
             db.session.add(program)
             db.session.commit()
+            
             return self.success_response(
                 program.__dict__,
                 "Program created successfully",

@@ -1,9 +1,14 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from sqlalchemy.exc import IntegrityError
 
 class EnrollmentResource(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('client_id', type=int, required=True, help='Client ID is required')
+        self.parser.add_argument('program_ids', type=int, action='append', required=True, help='Program IDs are required')
+
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
 
@@ -22,18 +27,16 @@ class EnrollmentResource(Resource):
             "program_ids": [1, 2, 3]
         }
         """
-        data = request.get_json()
-        
-        if not data or 'client_id' not in data or 'program_ids' not in data:
-            return self.error_response("client_id and program_ids are required")
-        
         try:
-            client = Client.query.get(data['client_id'])
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
+            client = Client.query.get(args['client_id'])
             if not client:
                 return self.error_response("Client not found", 404)
             
             enrollments = []
-            for program_id in data['program_ids']:
+            for program_id in args['program_ids']:
                 program = Program.query.get(program_id)
                 if not program:
                     return self.error_response(f"Program with ID {program_id} not found", 404)

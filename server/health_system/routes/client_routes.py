@@ -1,10 +1,20 @@
 from flask import request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
 class ClientResource(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('first_name', type=str, required=True, help='First name is required')
+        self.parser.add_argument('last_name', type=str, required=True, help='Last name is required')
+        self.parser.add_argument('date_of_birth', type=str, required=True, help='Date of birth is required (YYYY-MM-DD)')
+        self.parser.add_argument('gender', type=str, required=True, help='Gender is required')
+        self.parser.add_argument('contact_number', type=str, required=False)
+        self.parser.add_argument('email', type=str, required=False)
+        self.parser.add_argument('address', type=str, required=False)
+
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
 
@@ -28,37 +38,46 @@ class ClientResource(Resource):
             "address": "123 Main St"
         }
         """
-        data = request.get_json()
-        
-        required_fields = ['first_name', 'last_name', 'date_of_birth', 'gender']
-        for field in required_fields:
-            if field not in data:
-                return self.error_response(f"{field} is required")
-        
         try:
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
+            # Convert date string to date object
+            try:
+                date_of_birth = datetime.strptime(args['date_of_birth'], '%Y-%m-%d').date()
+            except ValueError:
+                return self.error_response("Invalid date format. Use YYYY-MM-DD")
+            
+            # Create new client
             client = Client(
-                first_name=data['first_name'],
-                last_name=data['last_name'],
-                date_of_birth=datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date(),
-                gender=data['gender'],
-                contact_number=data.get('contact_number'),
-                email=data.get('email'),
-                address=data.get('address')
+                first_name=args['first_name'],
+                last_name=args['last_name'],
+                date_of_birth=date_of_birth,
+                gender=args['gender'],
+                contact_number=args.get('contact_number'),
+                email=args.get('email'),
+                address=args.get('address')
             )
+            
             db.session.add(client)
             db.session.commit()
+            
             return self.success_response(
                 client.__dict__,
                 "Client registered successfully",
                 201
             )
-        except ValueError:
-            return self.error_response("Invalid date format. Use YYYY-MM-DD")
         except Exception as e:
             db.session.rollback()
             return self.error_response(str(e), 500)
 
 class ClientSearchResource(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('query', type=str, required=False, default='')
+        self.parser.add_argument('page', type=int, required=False, default=1)
+        self.parser.add_argument('per_page', type=int, required=False, default=10)
+
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
 
@@ -76,15 +95,14 @@ class ClientSearchResource(Resource):
         - page: Page number (default: 1)
         - per_page: Items per page (default: 10)
         """
-        query = request.args.get('query', '')
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
-        
         try:
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
             clients = Client.query.filter(
-                (Client.first_name.ilike(f'%{query}%')) |
-                (Client.last_name.ilike(f'%{query}%'))
-            ).paginate(page=page, per_page=per_page)
+                (Client.first_name.ilike(f'%{args["query"]}%')) |
+                (Client.last_name.ilike(f'%{args["query"]}%'))
+            ).paginate(page=args['page'], per_page=args['per_page'])
             
             return self.success_response({
                 'items': [client.__dict__ for client in clients.items],
