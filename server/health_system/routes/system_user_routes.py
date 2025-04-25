@@ -1,16 +1,17 @@
 from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, SystemUser
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps
+import os
 
 # Initialize API
 api = Api()
 
 # JWT configuration
-JWT_SECRET_KEY = 'your-secret-key'  # In production, use environment variable
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # In production, use environment variable
 JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 
 def token_required(f):
@@ -34,13 +35,12 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
-class SystemUserResource(Resource):
+class DoctorResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('username', type=str, required=True, help='Username is required')
         self.parser.add_argument('password', type=str, required=True, help='Password is required')
         self.parser.add_argument('email', type=str, required=True, help='Email is required')
-        self.parser.add_argument('role', type=str, required=True, help='Role is required')
 
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
@@ -53,13 +53,12 @@ class SystemUserResource(Resource):
 
     def post(self):
         """
-        Register a new system user (admin only)
+        Register a new doctor account
         Expected JSON body:
         {
             "username": "doctor1",
             "password": "securepassword",
-            "email": "doctor@example.com",
-            "role": "doctor"
+            "email": "doctor@example.com"
         }
         """
         try:
@@ -72,27 +71,31 @@ class SystemUserResource(Resource):
             if SystemUser.query.filter_by(email=args['email']).first():
                 return self.error_response("Email already exists")
             
-            # Create new system user
+            # Generate salt and hash password
+            salt = bcrypt.gensalt()
+            hashed_password = bcrypt.hashpw(args['password'].encode('utf-8'), salt)
+            
+            # Create new doctor account
             user = SystemUser(
                 username=args['username'],
-                password=generate_password_hash(args['password']),
+                password=hashed_password.decode('utf-8'),
                 email=args['email'],
-                role=args['role']
+                role='doctor'  # Always set role as doctor
             )
             
             db.session.add(user)
             db.session.commit()
             
             return self.success_response(
-                {'username': user.username, 'email': user.email, 'role': user.role},
-                "System user registered successfully",
+                {'username': user.username, 'email': user.email},
+                "Account created successfully",
                 201
             )
         except Exception as e:
             db.session.rollback()
             return self.error_response(str(e), 500)
 
-class SystemUserLoginResource(Resource):
+class DoctorLoginResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('username', type=str, required=True, help='Username is required')
@@ -109,7 +112,7 @@ class SystemUserLoginResource(Resource):
 
     def post(self):
         """
-        Login system user
+        Login as a doctor
         Expected JSON body:
         {
             "username": "doctor1",
@@ -120,14 +123,21 @@ class SystemUserLoginResource(Resource):
             args = self.parser.parse_args()
             
             user = SystemUser.query.filter_by(username=args['username']).first()
-            if not user or not check_password_hash(user.password, args['password']):
+            if not user:
                 return self.error_response("Invalid username or password", 401)
+            
+            # Verify password using bcrypt
+            if not bcrypt.checkpw(args['password'].encode('utf-8'), user.password.encode('utf-8')):
+                return self.error_response("Invalid username or password", 401)
+            
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
             
             # Generate JWT token
             token = jwt.encode({
                 'user_id': user.id,
                 'username': user.username,
-                'role': user.role,
                 'exp': datetime.utcnow() + JWT_ACCESS_TOKEN_EXPIRES
             }, JWT_SECRET_KEY)
             
@@ -135,14 +145,13 @@ class SystemUserLoginResource(Resource):
                 'token': token,
                 'user': {
                     'username': user.username,
-                    'email': user.email,
-                    'role': user.role
+                    'email': user.email
                 }
             }, "Login successful")
         except Exception as e:
             return self.error_response(str(e), 500)
 
 def init_system_user_routes(app):
-    api.add_resource(SystemUserResource, '/api/system-users')
-    api.add_resource(SystemUserLoginResource, '/api/system-users/login')
+    api.add_resource(DoctorResource, '/api/doctors')
+    api.add_resource(DoctorLoginResource, '/api/doctors/login')
     api.init_app(app) 
