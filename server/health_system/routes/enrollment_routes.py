@@ -31,7 +31,7 @@ class EnrollmentResource(Resource):
         """
         try:
             # Get the current user's ID
-            current_user_id = get_jwt_identity()
+            current_user_id = int(get_jwt_identity())
             
             # Parse and validate the request data
             args = self.parser.parse_args()
@@ -56,8 +56,18 @@ class EnrollmentResource(Resource):
             db.session.add_all(enrollments)
             db.session.commit()
             
+            # Convert enrollment objects to dictionaries
+            enrollment_dicts = [{
+                'id': e.id,
+                'client_id': e.client_id,
+                'program_id': e.program_id,
+                'enrollment_date': e.enrollment_date.isoformat() if e.enrollment_date else None,
+                'status': e.status,
+                'created_by': e.created_by
+            } for e in enrollments]
+            
             return self.success_response(
-                [e.__dict__ for e in enrollments],
+                enrollment_dicts,
                 "Client enrolled successfully"
             )
         except IntegrityError:

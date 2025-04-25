@@ -127,7 +127,7 @@ class DoctorLoginResource(Resource):
             db.session.commit()
             
             # Generate JWT token
-            access_token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=str(user.id))
             
             return self.success_response({
                 'token': access_token,

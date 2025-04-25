@@ -42,7 +42,7 @@ class ClientResource(Resource):
         """
         try:
             # Get the current user's ID
-            current_user_id = get_jwt_identity()
+            current_user_id = int(get_jwt_identity())
             
             # Parse and validate the request data
             args = self.parser.parse_args()
@@ -68,8 +68,22 @@ class ClientResource(Resource):
             db.session.add(client)
             db.session.commit()
             
+            # Convert client object to dictionary
+            client_dict = {
+                'id': client.id,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                'gender': client.gender,
+                'contact_number': client.contact_number,
+                'email': client.email,
+                'address': client.address,
+                'created_by': client.created_by,
+                'created_at': client.created_at.isoformat() if client.created_at else None
+            }
+            
             return self.success_response(
-                client.__dict__,
+                client_dict,
                 "Client registered successfully",
                 201
             )
@@ -80,9 +94,9 @@ class ClientResource(Resource):
 class ClientSearchResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('query', type=str, required=False, default='')
-        self.parser.add_argument('page', type=int, required=False, default=1)
-        self.parser.add_argument('per_page', type=int, required=False, default=10)
+        self.parser.add_argument('query', type=str, required=False, default='', location='args')
+        self.parser.add_argument('page', type=int, required=False, default=1, location='args')
+        self.parser.add_argument('per_page', type=int, required=False, default=10, location='args')
 
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
@@ -113,9 +127,18 @@ class ClientSearchResource(Resource):
             # Format the response with the new date format
             formatted_clients = []
             for client in clients.items:
-                client_dict = client.__dict__
-                if 'date_of_birth' in client_dict:
-                    client_dict['date_of_birth'] = client_dict['date_of_birth'].strftime('%d/%m/%Y')
+                client_dict = {
+                    'id': client.id,
+                    'first_name': client.first_name,
+                    'last_name': client.last_name,
+                    'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                    'gender': client.gender,
+                    'contact_number': client.contact_number,
+                    'email': client.email,
+                    'address': client.address,
+                    'created_by': client.created_by,
+                    'created_at': client.created_at.isoformat() if client.created_at else None
+                }
                 formatted_clients.append(client_dict)
             
             return self.success_response({
@@ -150,10 +173,30 @@ class ClientProfileResource(Resource):
             enrollments = Enrollment.query.filter_by(client_id=client_id).all()
             programs = [Program.query.get(e.program_id) for e in enrollments]
             
-            client_data = client.__dict__
-            if 'date_of_birth' in client_data:
-                client_data['date_of_birth'] = client_data['date_of_birth'].strftime('%d/%m/%Y')
-            client_data['programs'] = [p.__dict__ for p in programs]
+            # Format client data
+            client_data = {
+                'id': client.id,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                'gender': client.gender,
+                'contact_number': client.contact_number,
+                'email': client.email,
+                'address': client.address,
+                'created_by': client.created_by,
+                'created_at': client.created_at.isoformat() if client.created_at else None
+            }
+            
+            # Format program data
+            program_data = [{
+                'id': p.id,
+                'name': p.name,
+                'description': p.description,
+                'created_by': p.created_by,
+                'created_at': p.created_at.isoformat() if p.created_at else None
+            } for p in programs]
+            
+            client_data['programs'] = program_data
             
             return self.success_response(client_data)
         except Exception as e:

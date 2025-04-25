@@ -31,7 +31,7 @@ class ProgramResource(Resource):
         """
         try:
             # Get the current user's ID
-            current_user_id = get_jwt_identity()
+            current_user_id = int(get_jwt_identity())
             
             # Parse and validate the request data
             args = self.parser.parse_args()
@@ -46,8 +46,17 @@ class ProgramResource(Resource):
             db.session.add(program)
             db.session.commit()
             
+            # Convert program object to dictionary
+            program_dict = {
+                'id': program.id,
+                'name': program.name,
+                'description': program.description,
+                'created_by': program.created_by,
+                'created_at': program.created_at.isoformat() if program.created_at else None
+            }
+            
             return self.success_response(
-                program.__dict__,
+                program_dict,
                 "Program created successfully",
                 201
             )
