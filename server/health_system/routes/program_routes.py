@@ -9,6 +9,7 @@ class ProgramResource(Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('name', type=str, required=True, help='Program name is required')
         self.parser.add_argument('description', type=str, required=False)
+        self.parser.add_argument('duration', type=int, required=False, default=30, help='Duration in days')
 
     def error_response(self, message, status_code=400):
         return {'error': message}, status_code
@@ -26,7 +27,8 @@ class ProgramResource(Resource):
         Expected JSON body:
         {
             "name": "Program Name",
-            "description": "Program Description"
+            "description": "Program Description",
+            "duration": 30  # Duration in days (optional, defaults to 30)
         }
         """
         try:
@@ -40,6 +42,7 @@ class ProgramResource(Resource):
             program = Program(
                 name=args['name'],
                 description=args.get('description', ''),
+                duration=args.get('duration', 30),
                 created_by=current_user_id
             )
             
@@ -51,6 +54,7 @@ class ProgramResource(Resource):
                 'id': program.id,
                 'name': program.name,
                 'description': program.description,
+                'duration': program.duration,
                 'created_by': program.created_by,
                 'created_at': program.created_at.isoformat() if program.created_at else None
             }

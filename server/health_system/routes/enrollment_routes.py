@@ -77,9 +77,43 @@ class EnrollmentResource(Resource):
             db.session.rollback()
             return self.error_response(str(e), 500)
 
+    @jwt_required()
+    def delete(self, client_id, program_id):
+        """
+        Unenroll a client from a program
+        URL parameters:
+        - client_id: ID of the client to unenroll
+        - program_id: ID of the program to unenroll from
+        """
+        try:
+            # Get the current user's ID
+            current_user_id = int(get_jwt_identity())
+            
+            # Find the enrollment
+            enrollment = Enrollment.query.filter_by(
+                client_id=client_id,
+                program_id=program_id
+            ).first()
+            
+            if not enrollment:
+                return self.error_response("Enrollment not found", 404)
+            
+            # Delete the enrollment
+            db.session.delete(enrollment)
+            db.session.commit()
+            
+            return self.success_response(
+                None,
+                "Client successfully unenrolled from program",
+                200
+            )
+        except Exception as e:
+            db.session.rollback()
+            return self.error_response(str(e), 500)
+
 # Initialize API
 api = Api()
 
 def init_enrollment_routes(app):
-    api.add_resource(EnrollmentResource, '/api/enrollments')
+    api.add_resource(EnrollmentResource, '/api/enrollments', '/api/enrollments/<int:client_id>/<int:program_id>')
     api.init_app(app) 

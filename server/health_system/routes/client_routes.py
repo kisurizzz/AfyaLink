@@ -91,6 +91,104 @@ class ClientResource(Resource):
             db.session.rollback()
             return self.error_response(str(e), 500)
 
+    @jwt_required()
+    def put(self, client_id):
+        """
+        Update client details
+        Expected JSON body:
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "01/01/1990",
+            "gender": "Male",
+            "contact_number": "1234567890",
+            "email": "john.doe@example.com",
+            "address": "123 Main St"
+        }
+        """
+        try:
+            # Get the current user's ID
+            current_user_id = int(get_jwt_identity())
+            
+            # Find the client
+            client = Client.query.get(client_id)
+            if not client:
+                return self.error_response("Client not found", 404)
+            
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
+            # Convert date string to date object
+            try:
+                date_of_birth = datetime.strptime(args['date_of_birth'], '%d/%m/%Y').date()
+            except ValueError:
+                return self.error_response("Invalid date format. Use DD/MM/YYYY")
+            
+            # Update client details
+            client.first_name = args['first_name']
+            client.last_name = args['last_name']
+            client.date_of_birth = date_of_birth
+            client.gender = args['gender']
+            client.contact_number = args.get('contact_number')
+            client.email = args.get('email')
+            client.address = args.get('address')
+            
+            db.session.commit()
+            
+            # Format response
+            client_dict = {
+                'id': client.id,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                'gender': client.gender,
+                'contact_number': client.contact_number,
+                'email': client.email,
+                'address': client.address,
+                'created_by': client.created_by,
+                'created_at': client.created_at.isoformat() if client.created_at else None
+            }
+            
+            return self.success_response(
+                client_dict,
+                "Client details updated successfully"
+            )
+        except Exception as e:
+            db.session.rollback()
+            return self.error_response(str(e), 500)
+
+    @jwt_required()
+    def delete(self, client_id):
+        """
+        Delete a client
+        URL parameters:
+        - client_id: ID of the client to delete
+        """
+        try:
+            # Get the current user's ID
+            current_user_id = int(get_jwt_identity())
+            
+            # Find the client
+            client = Client.query.get(client_id)
+            if not client:
+                return self.error_response("Client not found", 404)
+            
+            # Delete all enrollments first (due to foreign key constraints)
+            Enrollment.query.filter_by(client_id=client_id).delete()
+            
+            # Delete the client
+            db.session.delete(client)
+            db.session.commit()
+            
+            return self.success_response(
+                None,
+                "Client successfully deleted",
+                200
+            )
+        except Exception as e:
+            db.session.rollback()
+            return self.error_response(str(e), 500)
+
 class ClientSearchResource(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
@@ -257,7 +355,7 @@ class ClientAPIResource(Resource):
 api = Api()
 
 def init_client_routes(app):
-    api.add_resource(ClientResource, '/api/clients')
+    api.add_resource(ClientResource, '/api/clients', '/api/clients/<int:client_id>')
     api.add_resource(ClientSearchResource, '/api/clients/search')
     api.add_resource(ClientProfileResource, '/api/clients/<int:client_id>')
     api.add_resource(ClientAPIResource, '/api/v1/clients/<int:client_id>')
