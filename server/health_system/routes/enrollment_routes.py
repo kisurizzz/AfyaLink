@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from sqlalchemy.exc import IntegrityError

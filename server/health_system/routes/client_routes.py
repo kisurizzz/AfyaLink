@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request
 from flask_restful import Resource, Api, reqparse
 from models import db, Client, Program, Enrollment
 from datetime import datetime
@@ -9,7 +9,7 @@ class ClientResource(Resource):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('first_name', type=str, required=True, help='First name is required')
         self.parser.add_argument('last_name', type=str, required=True, help='Last name is required')
-        self.parser.add_argument('date_of_birth', type=str, required=True, help='Date of birth is required (YYYY-MM-DD)')
+        self.parser.add_argument('date_of_birth', type=str, required=True, help='Date of birth is required (DD/MM/YYYY)')
         self.parser.add_argument('gender', type=str, required=True, help='Gender is required')
         self.parser.add_argument('contact_number', type=str, required=False)
         self.parser.add_argument('email', type=str, required=False)
@@ -31,7 +31,7 @@ class ClientResource(Resource):
         {
             "first_name": "John",
             "last_name": "Doe",
-            "date_of_birth": "1990-01-01",
+            "date_of_birth": "01/01/1990",
             "gender": "Male",
             "contact_number": "1234567890",
             "email": "john@example.com",
@@ -44,9 +44,9 @@ class ClientResource(Resource):
             
             # Convert date string to date object
             try:
-                date_of_birth = datetime.strptime(args['date_of_birth'], '%Y-%m-%d').date()
+                date_of_birth = datetime.strptime(args['date_of_birth'], '%d/%m/%Y').date()
             except ValueError:
-                return self.error_response("Invalid date format. Use YYYY-MM-DD")
+                return self.error_response("Invalid date format. Use DD/MM/YYYY")
             
             # Create new client
             client = Client(
@@ -104,8 +104,16 @@ class ClientSearchResource(Resource):
                 (Client.last_name.ilike(f'%{args["query"]}%'))
             ).paginate(page=args['page'], per_page=args['per_page'])
             
+            # Format the response with the new date format
+            formatted_clients = []
+            for client in clients.items:
+                client_dict = client.__dict__
+                if 'date_of_birth' in client_dict:
+                    client_dict['date_of_birth'] = client_dict['date_of_birth'].strftime('%d/%m/%Y')
+                formatted_clients.append(client_dict)
+            
             return self.success_response({
-                'items': [client.__dict__ for client in clients.items],
+                'items': formatted_clients,
                 'total': clients.total,
                 'pages': clients.pages,
                 'current_page': clients.page
@@ -137,6 +145,8 @@ class ClientProfileResource(Resource):
             programs = [Program.query.get(e.program_id) for e in enrollments]
             
             client_data = client.__dict__
+            if 'date_of_birth' in client_data:
+                client_data['date_of_birth'] = client_data['date_of_birth'].strftime('%d/%m/%Y')
             client_data['programs'] = [p.__dict__ for p in programs]
             
             return self.success_response(client_data)
@@ -171,7 +181,7 @@ class ClientAPIResource(Resource):
             response_data = {
                 'client_id': client.id,
                 'name': f"{client.first_name} {client.last_name}",
-                'date_of_birth': client.date_of_birth.isoformat(),
+                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
                 'gender': client.gender,
                 'contact': {
                     'phone': client.contact_number,
@@ -183,7 +193,7 @@ class ClientAPIResource(Resource):
                         'program_id': p.id,
                         'name': p.name,
                         'description': p.description,
-                        'enrollment_date': e.enrollment_date.isoformat(),
+                        'enrollment_date': e.enrollment_date.strftime('%d/%m/%Y'),
                         'status': e.status
                     }
                     for p, e in zip(programs, enrollments)
