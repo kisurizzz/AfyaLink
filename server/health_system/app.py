@@ -4,6 +4,7 @@ from models import db
 from routes.program_routes import init_program_routes
 from routes.client_routes import init_client_routes
 from routes.enrollment_routes import init_enrollment_routes
+from routes.system_user_routes import init_system_user_routes
 
 app = Flask(__name__)
 CORS(app) #Enable CORS for all routes
@@ -14,6 +15,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 # Initialize routes
+init_system_user_routes(app)
 init_program_routes(app)
 init_client_routes(app)
 init_enrollment_routes(app)
