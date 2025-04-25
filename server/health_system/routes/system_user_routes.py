@@ -57,18 +57,18 @@ class DoctorResource(Resource):
         try:
             args = self.parser.parse_args()
             
-            # Check if user already exists
+            # here, we heck if user already exists
             if SystemUser.query.filter_by(username=args['username']).first():
                 return self.error_response("Username already exists")
             
             if SystemUser.query.filter_by(email=args['email']).first():
                 return self.error_response("Email already exists")
             
-            # Generate salt and hash password
+            # generate salt and hash password
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(args['password'].encode('utf-8'), salt)
             
-            # Create new doctor account
+            # create new doci account
             user = SystemUser(
                 username=args['username'],
                 password=hashed_password.decode('utf-8'),
