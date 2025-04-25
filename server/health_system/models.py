@@ -9,12 +9,16 @@ class SystemUser(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # doctor, admin, etc.
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
 
+    # Relationships
+    created_clients = db.relationship('Client', backref='creator', lazy=True)
+    created_programs = db.relationship('Program', backref='creator', lazy=True)
+    created_enrollments = db.relationship('Enrollment', backref='creator', lazy=True)
+
     def __repr__(self):
-        return f'<SystemUser {self.username}>'
+        return f'<Doctor {self.username}>'
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,7 +60,7 @@ class Enrollment(db.Model):
     program_id = db.Column(db.Integer, db.ForeignKey('program.id'), nullable=False)
     enrollment_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='Active')  # Active, Completed, Suspended
-    enrolled_by = db.Column(db.Integer, db.ForeignKey('system_user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('system_user.id'))
     
     # Ensure a client can only be enrolled once in a program
     __table_args__ = (db.UniqueConstraint('client_id', 'program_id'),)
