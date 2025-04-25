@@ -16,6 +16,7 @@ import {
   Paper,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import { getClients } from "../../utils/api";
 
 export default function Clients() {
   const router = useRouter();
@@ -36,12 +37,8 @@ export default function Clients() {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/clients/search", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const data = await response.json();
+      const token = localStorage.getItem("token");
+      const data = await getClients(token);
       if (data.data) {
         setClients(data.data.items);
       }
