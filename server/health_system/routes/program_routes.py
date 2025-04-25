@@ -1,19 +1,17 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
+from flask_restful import Resource, Api
 from models import db, Program
 from sqlalchemy.exc import IntegrityError
-from flask.views import MethodView
 
-program_bp = Blueprint('program', __name__)
-
-class ProgramView(MethodView):
+class ProgramResource(Resource):
     def error_response(self, message, status_code=400):
-        return jsonify({'error': message}), status_code
+        return {'error': message}, status_code
 
     def success_response(self, data, message="Success", status_code=200):
-        return jsonify({
+        return {
             'message': message,
             'data': data
-        }), status_code
+        }, status_code
 
     def post(self):
         """
@@ -48,6 +46,9 @@ class ProgramView(MethodView):
             db.session.rollback()
             return self.error_response(str(e), 500)
 
-# Register the view
-program_view = ProgramView.as_view('program_api')
-program_bp.add_url_rule('/api/programs', view_func=program_view, methods=['POST']) 
+# Initialize API
+api = Api()
+
+def init_program_routes(app):
+    api.add_resource(ProgramResource, '/api/programs')
+    api.init_app(app) 

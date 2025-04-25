@@ -1,20 +1,18 @@
-from flask import Blueprint, request, jsonify
+from flask import request, jsonify
+from flask_restful import Resource, Api
 from models import db, Client, Program, Enrollment
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
-from flask.views import MethodView
 
-client_bp = Blueprint('client', __name__)
-
-class ClientView(MethodView):
+class ClientResource(Resource):
     def error_response(self, message, status_code=400):
-        return jsonify({'error': message}), status_code
+        return {'error': message}, status_code
 
     def success_response(self, data, message="Success", status_code=200):
-        return jsonify({
+        return {
             'message': message,
             'data': data
-        }), status_code
+        }, status_code
 
     def post(self):
         """
@@ -60,17 +58,17 @@ class ClientView(MethodView):
             db.session.rollback()
             return self.error_response(str(e), 500)
 
-    def get(self, client_id=None):
-        """
-        Get client profile or search clients
-        If client_id is provided, returns specific client profile
-        Otherwise, performs a search based on query parameters
-        """
-        if client_id:
-            return self.get_client_profile(client_id)
-        return self.search_clients()
+class ClientSearchResource(Resource):
+    def error_response(self, message, status_code=400):
+        return {'error': message}, status_code
 
-    def search_clients(self):
+    def success_response(self, data, message="Success", status_code=200):
+        return {
+            'message': message,
+            'data': data
+        }, status_code
+
+    def get(self):
         """
         Search for clients by name or other criteria
         Query parameters:
@@ -97,7 +95,17 @@ class ClientView(MethodView):
         except Exception as e:
             return self.error_response(str(e), 500)
 
-    def get_client_profile(self, client_id):
+class ClientProfileResource(Resource):
+    def error_response(self, message, status_code=400):
+        return {'error': message}, status_code
+
+    def success_response(self, data, message="Success", status_code=200):
+        return {
+            'message': message,
+            'data': data
+        }, status_code
+
+    def get(self, client_id):
         """
         Get detailed client profile including enrolled programs
         """
@@ -117,15 +125,15 @@ class ClientView(MethodView):
         except Exception as e:
             return self.error_response(str(e), 500)
 
-class ClientAPIView(MethodView):
+class ClientAPIResource(Resource):
     def error_response(self, message, status_code=400):
-        return jsonify({'error': message}), status_code
+        return {'error': message}, status_code
 
     def success_response(self, data, message="Success", status_code=200):
-        return jsonify({
+        return {
             'message': message,
             'data': data
-        }), status_code
+        }, status_code
 
     def get(self, client_id):
         """
@@ -168,11 +176,12 @@ class ClientAPIView(MethodView):
         except Exception as e:
             return self.error_response(str(e), 500)
 
-# Register the views
-client_view = ClientView.as_view('client_api')
-client_api_view = ClientAPIView.as_view('client_api_v1')
+# Initialize API
+api = Api()
 
-client_bp.add_url_rule('/api/clients', view_func=client_view, methods=['POST'])
-client_bp.add_url_rule('/api/clients/search', view_func=client_view, methods=['GET'])
-client_bp.add_url_rule('/api/clients/<int:client_id>', view_func=client_view, methods=['GET'])
-client_bp.add_url_rule('/api/v1/clients/<int:client_id>', view_func=client_api_view, methods=['GET']) 
+def init_client_routes(app):
+    api.add_resource(ClientResource, '/api/clients')
+    api.add_resource(ClientSearchResource, '/api/clients/search')
+    api.add_resource(ClientProfileResource, '/api/clients/<int:client_id>')
+    api.add_resource(ClientAPIResource, '/api/v1/clients/<int:client_id>')
+    api.init_app(app) 
