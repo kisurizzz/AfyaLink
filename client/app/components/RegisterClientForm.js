@@ -39,6 +39,12 @@ export default function RegisterClientForm() {
     }));
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -50,7 +56,13 @@ export default function RegisterClientForm() {
         throw new Error("No authentication token found");
       }
 
-      await createClient(formData, token);
+      // Format the date before sending to API
+      const formattedData = {
+        ...formData,
+        date_of_birth: formatDate(formData.date_of_birth),
+      };
+
+      await createClient(formattedData, token);
       setSuccess(true);
       setTimeout(() => {
         router.push("/dashboard/clients");
