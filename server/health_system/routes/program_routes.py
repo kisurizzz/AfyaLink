@@ -21,29 +21,61 @@ class ProgramResource(Resource):
         }, status_code
 
     @jwt_required()
-    def get(self):
+    def get(self, program_id=None):
         """
-        Get all health programs
-        Returns a list of all programs
+        Get program details
+        If program_id is provided, returns details for that specific program
+        Otherwise, returns all programs
         """
         try:
-            # Get all programs
-            programs = Program.query.all()
-            
-            # Convert programs to list of dictionaries
-            programs_list = [{
-                'id': program.id,
-                'name': program.name,
-                'description': program.description,
-                'duration': program.duration,
-                'created_by': program.created_by,
-                'created_at': program.created_at.isoformat() if program.created_at else None
-            } for program in programs]
-            
-            return self.success_response(
-                programs_list,
-                "Programs retrieved successfully"
-            )
+            if program_id is not None:
+                # Get specific program
+                program = Program.query.get(program_id)
+                if not program:
+                    return self.error_response("Program not found", 404)
+
+                # Get program's enrolled clients
+                clients = program.clients
+
+                # Format program data
+                program_data = {
+                    'id': program.id,
+                    'name': program.name,
+                    'description': program.description,
+                    'duration': program.duration,
+                    'created_by': program.created_by,
+                    'created_at': program.created_at.isoformat() if program.created_at else None,
+                    'clients': [{
+                        'id': c.id,
+                        'first_name': c.first_name,
+                        'last_name': c.last_name,
+                        'email': c.email,
+                        'contact_number': c.contact_number
+                    } for c in clients]
+                }
+
+                return self.success_response(
+                    program_data,
+                    "Program details retrieved successfully"
+                )
+            else:
+                # Get all programs
+                programs = Program.query.all()
+                
+                # Convert programs to list of dictionaries
+                programs_list = [{
+                    'id': program.id,
+                    'name': program.name,
+                    'description': program.description,
+                    'duration': program.duration,
+                    'created_by': program.created_by,
+                    'created_at': program.created_at.isoformat() if program.created_at else None
+                } for program in programs]
+                
+                return self.success_response(
+                    programs_list,
+                    "Programs retrieved successfully"
+                )
         except Exception as e:
             return self.error_response(str(e), 500)
 
