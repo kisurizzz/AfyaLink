@@ -1,5 +1,11 @@
 const API_URL = "http://127.0.0.1:5000/api";
 
+// Helper function to get headers with token
+const getHeaders = (token) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
+});
+
 // Auth API calls
 export const login = async (username, password) => {
   const response = await fetch(`${API_URL}/doctors/login`, {
@@ -26,18 +32,14 @@ export const signup = async (username, password, email) => {
 // Client API calls
 export const getClients = async (token) => {
   const response = await fetch(`${API_URL}/clients/search`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
 
 export const getClientById = async (clientId, token) => {
   const response = await fetch(`${API_URL}/clients/${clientId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
@@ -45,10 +47,7 @@ export const getClientById = async (clientId, token) => {
 export const createClient = async (clientData, token) => {
   const response = await fetch(`${API_URL}/clients`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
     body: JSON.stringify(clientData),
   });
   return response.json();
@@ -57,10 +56,7 @@ export const createClient = async (clientData, token) => {
 export const updateClient = async (clientId, clientData, token) => {
   const response = await fetch(`${API_URL}/clients/${clientId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
     body: JSON.stringify(clientData),
   });
   return response.json();
@@ -69,9 +65,7 @@ export const updateClient = async (clientId, clientData, token) => {
 export const deleteClient = async (clientId, token) => {
   const response = await fetch(`${API_URL}/clients/${clientId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
@@ -79,18 +73,14 @@ export const deleteClient = async (clientId, token) => {
 // Program API calls
 export const getPrograms = async (token) => {
   const response = await fetch(`${API_URL}/programs`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
 
 export const getProgramById = async (programId, token) => {
   const response = await fetch(`${API_URL}/programs/${programId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
@@ -98,10 +88,7 @@ export const getProgramById = async (programId, token) => {
 export const createProgram = async (programData, token) => {
   const response = await fetch(`${API_URL}/programs`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
     body: JSON.stringify(programData),
   });
   return response.json();
@@ -110,10 +97,7 @@ export const createProgram = async (programData, token) => {
 export const updateProgram = async (programId, programData, token) => {
   const response = await fetch(`${API_URL}/programs/${programId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
     body: JSON.stringify(programData),
   });
   return response.json();
@@ -122,9 +106,7 @@ export const updateProgram = async (programId, programData, token) => {
 export const deleteProgram = async (programId, token) => {
   const response = await fetch(`${API_URL}/programs/${programId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
@@ -132,9 +114,7 @@ export const deleteProgram = async (programId, token) => {
 // Enrollment API calls
 export const getEnrollments = async (token) => {
   const response = await fetch(`${API_URL}/enrollments`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
   });
   return response.json();
 };
@@ -142,10 +122,7 @@ export const getEnrollments = async (token) => {
 export const createEnrollment = async (enrollmentData, token) => {
   const response = await fetch(`${API_URL}/enrollments`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getHeaders(token),
     body: JSON.stringify(enrollmentData),
   });
   return response.json();
@@ -156,9 +133,7 @@ export const deleteEnrollment = async (clientId, programId, token) => {
     `${API_URL}/enrollments/${clientId}/${programId}`,
     {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getHeaders(token),
     }
   );
   return response.json();
