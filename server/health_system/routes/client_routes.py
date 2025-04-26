@@ -26,33 +26,69 @@ class ClientResource(Resource):
         }, status_code
 
     @jwt_required()
-    def get(self):
+    def get(self, client_id=None):
         """
-        Get all clients
-        Returns a list of all clients
+        Get client details
+        If client_id is provided, returns details for that specific client
+        Otherwise, returns all clients
         """
         try:
-            # Get all clients
-            clients = Client.query.all()
-            
-            # Convert clients to list of dictionaries
-            clients_list = [{
-                'id': client.id,
-                'first_name': client.first_name,
-                'last_name': client.last_name,
-                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
-                'gender': client.gender,
-                'contact_number': client.contact_number,
-                'email': client.email,
-                'address': client.address,
-                'created_by': client.created_by,
-                'created_at': client.created_at.isoformat() if client.created_at else None
-            } for client in clients]
-            
-            return self.success_response(
-                clients_list,
-                "Clients retrieved successfully"
-            )
+            if client_id is not None:
+                # Get specific client
+                client = Client.query.get(client_id)
+                if not client:
+                    return self.error_response("Client not found", 404)
+
+                # Get client's enrollments with program details
+                enrollments = Enrollment.query.filter_by(client_id=client_id).all()
+                programs = [Program.query.get(e.program_id) for e in enrollments]
+
+                # Format client data
+                client_data = {
+                    'id': client.id,
+                    'first_name': client.first_name,
+                    'last_name': client.last_name,
+                    'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                    'gender': client.gender,
+                    'contact_number': client.contact_number,
+                    'email': client.email,
+                    'address': client.address,
+                    'created_by': client.created_by,
+                    'created_at': client.created_at.isoformat() if client.created_at else None,
+                    'programs': [{
+                        'id': p.id,
+                        'name': p.name,
+                        'description': p.description,
+                        'duration': p.duration,
+                        'created_by': p.created_by,
+                        'created_at': p.created_at.isoformat() if p.created_at else None
+                    } for p in programs]
+                }
+
+                return self.success_response(
+                    client_data,
+                    "Client details retrieved successfully"
+                )
+            else:
+                # Get all clients
+                clients = Client.query.all()
+                clients_list = [{
+                    'id': client.id,
+                    'first_name': client.first_name,
+                    'last_name': client.last_name,
+                    'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                    'gender': client.gender,
+                    'contact_number': client.contact_number,
+                    'email': client.email,
+                    'address': client.address,
+                    'created_by': client.created_by,
+                    'created_at': client.created_at.isoformat() if client.created_at else None
+                } for client in clients]
+
+                return self.success_response(
+                    clients_list,
+                    "Clients retrieved successfully"
+                )
         except Exception as e:
             return self.error_response(str(e), 500)
 

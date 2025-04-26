@@ -98,9 +98,63 @@ class ProgramResource(Resource):
             db.session.rollback()
             return self.error_response(str(e), 500)
 
+    @jwt_required()
+    def put(self, program_id):
+        """
+        Update an existing health program
+        URL parameters:
+        - program_id: ID of the program to update
+        
+        Expected JSON body:
+        {
+            "name": "Updated Program Name",
+            "description": "Updated Program Description",
+            "duration": 45  # Duration in days (optional)
+        }
+        """
+        try:
+            # Get the current user's ID
+            current_user_id = int(get_jwt_identity())
+            
+            # Find the program
+            program = Program.query.get(program_id)
+            if not program:
+                return self.error_response("Program not found", 404)
+            
+            # Parse and validate the request data
+            args = self.parser.parse_args()
+            
+            # Update program details
+            program.name = args['name']
+            program.description = args.get('description', program.description)
+            program.duration = args.get('duration', program.duration)
+            
+            db.session.commit()
+            
+            # Convert program object to dictionary
+            program_dict = {
+                'id': program.id,
+                'name': program.name,
+                'description': program.description,
+                'duration': program.duration,
+                'created_by': program.created_by,
+                'created_at': program.created_at.isoformat() if program.created_at else None
+            }
+            
+            return self.success_response(
+                program_dict,
+                "Program updated successfully"
+            )
+        except IntegrityError:
+            db.session.rollback()
+            return self.error_response("Program with this name already exists", 409)
+        except Exception as e:
+            db.session.rollback()
+            return self.error_response(str(e), 500)
+
 # Initialize API
 api = Api()
 
 def init_program_routes(app):
-    api.add_resource(ProgramResource, '/api/programs')
+    api.add_resource(ProgramResource, '/api/programs', '/api/programs/<int:program_id>')
     api.init_app(app) 

@@ -19,8 +19,10 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { getClients, getPrograms } from "../../src/utils/api";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
   const [clients, setClients] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -61,6 +63,10 @@ export default function Dashboard() {
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+  };
+
+  const handleViewClient = (clientId) => {
+    router.push(`/clients/${clientId}`);
   };
 
   if (loading) {
@@ -144,7 +150,12 @@ export default function Dashboard() {
                         {client.contact_number || client.email || "N/A"}
                       </TableCell>
                       <TableCell>
-                        <Button variant="outlined" size="small" sx={{ mr: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          sx={{ mr: 1 }}
+                          onClick={() => handleViewClient(client.id)}
+                        >
                           View
                         </Button>
                         <Button variant="outlined" size="small" color="primary">
