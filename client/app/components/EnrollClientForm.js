@@ -73,8 +73,11 @@ export default function EnrollClientForm({ program, onCancel }) {
         token
       );
       setSuccess(true);
+      // Wait for the success message to be shown
       setTimeout(() => {
-        router.push(`/programs/${program.id}`); // Navigate back to program details
+        // Navigate back to program details and force a refresh
+        router.push(`/programs/${program.id}`);
+        router.refresh();
       }, 1000);
     } catch (err) {
       console.error("Error enrolling client:", err);
