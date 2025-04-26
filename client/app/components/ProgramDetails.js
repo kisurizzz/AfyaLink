@@ -21,15 +21,18 @@ import {
   CalendarToday as CalendarIcon,
   People as PeopleIcon,
   ArrowBack as ArrowBackIcon,
+  PersonAdd as PersonAddIcon,
 } from "@mui/icons-material";
 import { getProgramById } from "../../src/utils/api";
 import { useRouter } from "next/navigation";
+import EnrollClientForm from "./EnrollClientForm";
 
 export default function ProgramDetails({ programId }) {
   const router = useRouter();
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   const fetchProgramDetails = async () => {
     try {
@@ -56,6 +59,14 @@ export default function ProgramDetails({ programId }) {
       fetchProgramDetails();
     }
   }, [programId]);
+
+  const handleEnrollClick = () => {
+    setIsEnrolling(true);
+  };
+
+  const handleCancelEnroll = () => {
+    setIsEnrolling(false);
+  };
 
   if (loading) {
     return (
@@ -129,162 +140,182 @@ export default function ProgramDetails({ programId }) {
               Program Details
             </Typography>
           </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PersonAddIcon />}
+            onClick={handleEnrollClick}
+            disabled={isEnrolling}
+          >
+            Enroll Client
+          </Button>
         </Box>
 
-        <Grid container spacing={3}>
-          {/* Program Overview Card */}
-          <Grid item xs={12} md={4}>
-            <Card elevation={3} sx={{ height: "100%" }}>
-              <CardContent sx={{ textAlign: "center", py: 4 }}>
-                <Box
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    mx: "auto",
-                    mb: 2,
-                    bgcolor: "primary.main",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <DescriptionIcon sx={{ fontSize: 60, color: "white" }} />
-                </Box>
-                <Typography variant="h5" gutterBottom>
-                  {program.name}
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Tooltip title="Duration">
-                    <Chip
-                      icon={<CalendarIcon />}
-                      label={`${program.duration} days`}
-                      variant="outlined"
-                      sx={{ m: 0.5 }}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Enrolled Clients">
-                    <Chip
-                      icon={<PeopleIcon />}
-                      label={`${program.clients?.length || 0} clients`}
-                      variant="outlined"
-                      sx={{ m: 0.5 }}
-                    />
-                  </Tooltip>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Program Details Card */}
-          <Grid item xs={12} md={8}>
-            <Card elevation={3} sx={{ height: "100%" }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Program Information
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Box
-                      sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}
-                    >
-                      <DescriptionIcon
-                        sx={{ mr: 1, color: "text.secondary", mt: 0.5 }}
-                      />
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Description
-                        </Typography>
-                        <Typography variant="body1">
-                          {program.description || "No description provided"}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Enrolled Clients */}
-          <Grid item xs={12}>
-            <Card elevation={3}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Enrolled Clients
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                {program.clients && program.clients.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {program.clients.map((client) => (
-                      <Grid item xs={12} sm={6} md={4} key={client.id}>
-                        <Card
-                          elevation={1}
-                          sx={{
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                            transition: "transform 0.2s",
-                            "&:hover": {
-                              transform: "translateY(-4px)",
-                            },
-                          }}
-                        >
-                          <CardContent>
-                            <Typography variant="h6" gutterBottom>
-                              {client.first_name} {client.last_name}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ mb: 2 }}
-                            >
-                              {client.email ||
-                                client.contact_number ||
-                                "No contact information"}
-                            </Typography>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "flex-end",
-                                alignItems: "center",
-                                mt: "auto",
-                              }}
-                            >
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() =>
-                                  router.push(`/clients/${client.id}`)
-                                }
-                              >
-                                View Client
-                              </Button>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
+        {isEnrolling ? (
+          <EnrollClientForm program={program} onCancel={handleCancelEnroll} />
+        ) : (
+          <Grid container spacing={3}>
+            {/* Program Overview Card */}
+            <Grid item xs={12} md={4}>
+              <Card elevation={3} sx={{ height: "100%" }}>
+                <CardContent sx={{ textAlign: "center", py: 4 }}>
                   <Box
                     sx={{
-                      textAlign: "center",
-                      py: 4,
-                      bgcolor: "grey.50",
-                      borderRadius: 1,
+                      width: 120,
+                      height: 120,
+                      mx: "auto",
+                      mb: 2,
+                      bgcolor: "primary.main",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <Typography color="text.secondary">
-                      No clients enrolled in this program
-                    </Typography>
+                    <DescriptionIcon sx={{ fontSize: 60, color: "white" }} />
                   </Box>
-                )}
-              </CardContent>
-            </Card>
+                  <Typography variant="h5" gutterBottom>
+                    {program.name}
+                  </Typography>
+                  <Box sx={{ mt: 2 }}>
+                    <Tooltip title="Duration">
+                      <Chip
+                        icon={<CalendarIcon />}
+                        label={`${program.duration} days`}
+                        variant="outlined"
+                        sx={{ m: 0.5 }}
+                      />
+                    </Tooltip>
+                    <Tooltip title="Enrolled Clients">
+                      <Chip
+                        icon={<PeopleIcon />}
+                        label={`${program.clients?.length || 0} clients`}
+                        variant="outlined"
+                        sx={{ m: 0.5 }}
+                      />
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Program Details Card */}
+            <Grid item xs={12} md={8}>
+              <Card elevation={3} sx={{ height: "100%" }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Program Information
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          mb: 2,
+                        }}
+                      >
+                        <DescriptionIcon
+                          sx={{ mr: 1, color: "text.secondary", mt: 0.5 }}
+                        />
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
+                            Description
+                          </Typography>
+                          <Typography variant="body1">
+                            {program.description || "No description provided"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Enrolled Clients */}
+            <Grid item xs={12}>
+              <Card elevation={3}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Enrolled Clients
+                  </Typography>
+                  <Divider sx={{ mb: 3 }} />
+                  {program.clients && program.clients.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {program.clients.map((client) => (
+                        <Grid item xs={12} sm={6} md={4} key={client.id}>
+                          <Card
+                            elevation={1}
+                            sx={{
+                              height: "100%",
+                              display: "flex",
+                              flexDirection: "column",
+                              transition: "transform 0.2s",
+                              "&:hover": {
+                                transform: "translateY(-4px)",
+                              },
+                            }}
+                          >
+                            <CardContent>
+                              <Typography variant="h6" gutterBottom>
+                                {client.first_name} {client.last_name}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mb: 2 }}
+                              >
+                                {client.email ||
+                                  client.contact_number ||
+                                  "No contact information"}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                  alignItems: "center",
+                                  mt: "auto",
+                                }}
+                              >
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() =>
+                                    router.push(`/clients/${client.id}`)
+                                  }
+                                >
+                                  View Client
+                                </Button>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        bgcolor: "grey.50",
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography color="text.secondary">
+                        No clients enrolled in this program
+                      </Typography>
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Container>
     </Box>
   );
