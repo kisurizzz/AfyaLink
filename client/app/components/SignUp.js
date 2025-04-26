@@ -11,21 +11,22 @@ import {
   Link,
   IconButton,
   InputAdornment,
-  Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { login } from "../../src/utils/api";
+import { signup } from "../../src/utils/api";
 import { useRouter } from "next/navigation";
 
-export default function Login() {
+export default function SignUp() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
+    confirmPassword: "",
+    email: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,35 +34,46 @@ export default function Login() {
       ...prev,
       [name]: value,
     }));
-    setError(""); // Clear error when user types
+    // Clear password error when user types
+    if (name === "password" || name === "confirmPassword") {
+      setPasswordError("");
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
 
     try {
-      const response = await login(formData.username, formData.password);
-
+      const response = await signup(
+        formData.username,
+        formData.password,
+        formData.email
+      );
       if (response.token) {
-        // Store token in localStorage
-        localStorage.setItem("token", response.token);
-        // Redirect to dashboard
-        router.push("/dashboard");
+        // Handle successful signup (e.g., store token, redirect)
+        console.log("Signup successful:", response);
+        router.push("/login"); // Redirect to login page after successful signup
       } else {
-        setError("Invalid response from server");
+        // Handle signup error
+        console.error("Signup failed:", response.error);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      setError(error.message || "An error occurred during login");
-    } finally {
-      setIsLoading(false);
+      console.error("Error during signup:", error);
     }
   };
 
   const handleClickShowPassword = () => {
     setShowPassword((show) => !show);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword((show) => !show);
   };
 
   return (
@@ -96,13 +108,8 @@ export default function Login() {
           </Typography>
           <Paper elevation={3} sx={{ p: 4, width: "100%" }}>
             <Typography component="h2" variant="h5" align="center" gutterBottom>
-              Sign In
+              Create Account
             </Typography>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <TextField
                 margin="normal"
@@ -115,8 +122,17 @@ export default function Login() {
                 autoFocus
                 value={formData.username}
                 onChange={handleChange}
-                error={!!error}
-                disabled={isLoading}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                value={formData.email}
+                onChange={handleChange}
               />
               <TextField
                 margin="normal"
@@ -126,11 +142,9 @@ export default function Login() {
                 label="Password"
                 type={showPassword ? "text" : "password"}
                 id="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
-                error={!!error}
-                disabled={isLoading}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -138,9 +152,39 @@ export default function Login() {
                         aria-label="toggle password visibility"
                         onClick={handleClickShowPassword}
                         edge="end"
-                        disabled={isLoading}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="confirmPassword"
+                label="Confirm Password"
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                autoComplete="new-password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={!!passwordError}
+                helperText={passwordError}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={handleClickShowConfirmPassword}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -151,13 +195,12 @@ export default function Login() {
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
-                disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                Sign Up
               </Button>
               <Box sx={{ textAlign: "center" }}>
-                <Link href="/signup" variant="body2">
-                  Don't have an account? Sign up
+                <Link href="/login" variant="body2">
+                  Already have an account? Sign in
                 </Link>
               </Box>
             </Box>

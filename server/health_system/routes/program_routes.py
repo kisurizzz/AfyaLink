@@ -21,6 +21,33 @@ class ProgramResource(Resource):
         }, status_code
 
     @jwt_required()
+    def get(self):
+        """
+        Get all health programs
+        Returns a list of all programs
+        """
+        try:
+            # Get all programs
+            programs = Program.query.all()
+            
+            # Convert programs to list of dictionaries
+            programs_list = [{
+                'id': program.id,
+                'name': program.name,
+                'description': program.description,
+                'duration': program.duration,
+                'created_by': program.created_by,
+                'created_at': program.created_at.isoformat() if program.created_at else None
+            } for program in programs]
+            
+            return self.success_response(
+                programs_list,
+                "Programs retrieved successfully"
+            )
+        except Exception as e:
+            return self.error_response(str(e), 500)
+
+    @jwt_required()
     def post(self):
         """
         Create a new health program

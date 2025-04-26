@@ -26,6 +26,37 @@ class ClientResource(Resource):
         }, status_code
 
     @jwt_required()
+    def get(self):
+        """
+        Get all clients
+        Returns a list of all clients
+        """
+        try:
+            # Get all clients
+            clients = Client.query.all()
+            
+            # Convert clients to list of dictionaries
+            clients_list = [{
+                'id': client.id,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'date_of_birth': client.date_of_birth.strftime('%d/%m/%Y'),
+                'gender': client.gender,
+                'contact_number': client.contact_number,
+                'email': client.email,
+                'address': client.address,
+                'created_by': client.created_by,
+                'created_at': client.created_at.isoformat() if client.created_at else None
+            } for client in clients]
+            
+            return self.success_response(
+                clients_list,
+                "Clients retrieved successfully"
+            )
+        except Exception as e:
+            return self.error_response(str(e), 500)
+
+    @jwt_required()
     def post(self):
         """
         Register a new client

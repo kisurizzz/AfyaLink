@@ -6,6 +6,17 @@ const getHeaders = (token) => ({
   Authorization: `Bearer ${token}`,
 });
 
+// Helper function to handle API responses
+const handleResponse = async (response) => {
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+
+  return data;
+};
+
 // Auth API calls
 export const login = async (username, password) => {
   const response = await fetch(`${API_URL}/doctors/login`, {
@@ -15,7 +26,22 @@ export const login = async (username, password) => {
     },
     body: JSON.stringify({ username, password }),
   });
-  return response.json();
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Login failed");
+  }
+
+  // Handle the specific response format from your backend
+  if (data.message === "Login successful" && data.data && data.data.token) {
+    return {
+      token: data.data.token,
+      user: data.data.user,
+    };
+  }
+
+  throw new Error("Invalid response format from server");
 };
 
 export const signup = async (username, password, email) => {
@@ -26,22 +52,27 @@ export const signup = async (username, password, email) => {
     },
     body: JSON.stringify({ username, password, email }),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 // Client API calls
 export const getClients = async (token) => {
-  const response = await fetch(`${API_URL}/clients/search`, {
+  const response = await fetch(`${API_URL}/clients`, {
+    method: "GET",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const getClientById = async (clientId, token) => {
   const response = await fetch(`${API_URL}/clients/${clientId}`, {
+    method: "GET",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const createClient = async (clientData, token) => {
@@ -50,7 +81,8 @@ export const createClient = async (clientData, token) => {
     headers: getHeaders(token),
     body: JSON.stringify(clientData),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const updateClient = async (clientId, clientData, token) => {
@@ -59,7 +91,8 @@ export const updateClient = async (clientId, clientData, token) => {
     headers: getHeaders(token),
     body: JSON.stringify(clientData),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const deleteClient = async (clientId, token) => {
@@ -67,22 +100,27 @@ export const deleteClient = async (clientId, token) => {
     method: "DELETE",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 // Program API calls
 export const getPrograms = async (token) => {
   const response = await fetch(`${API_URL}/programs`, {
+    method: "GET",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const getProgramById = async (programId, token) => {
   const response = await fetch(`${API_URL}/programs/${programId}`, {
+    method: "GET",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const createProgram = async (programData, token) => {
@@ -91,7 +129,8 @@ export const createProgram = async (programData, token) => {
     headers: getHeaders(token),
     body: JSON.stringify(programData),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const updateProgram = async (programId, programData, token) => {
@@ -100,7 +139,8 @@ export const updateProgram = async (programId, programData, token) => {
     headers: getHeaders(token),
     body: JSON.stringify(programData),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const deleteProgram = async (programId, token) => {
@@ -108,15 +148,18 @@ export const deleteProgram = async (programId, token) => {
     method: "DELETE",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 // Enrollment API calls
 export const getEnrollments = async (token) => {
   const response = await fetch(`${API_URL}/enrollments`, {
+    method: "GET",
     headers: getHeaders(token),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const createEnrollment = async (enrollmentData, token) => {
@@ -125,7 +168,8 @@ export const createEnrollment = async (enrollmentData, token) => {
     headers: getHeaders(token),
     body: JSON.stringify(enrollmentData),
   });
-  return response.json();
+
+  return handleResponse(response);
 };
 
 export const deleteEnrollment = async (clientId, programId, token) => {
@@ -136,5 +180,6 @@ export const deleteEnrollment = async (clientId, programId, token) => {
       headers: getHeaders(token),
     }
   );
-  return response.json();
+
+  return handleResponse(response);
 };
