@@ -47,6 +47,14 @@ export default function Login() {
       if (response.token) {
         // Store token in localStorage
         localStorage.setItem("token", response.token);
+        // Store user info in localStorage
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            username: formData.username,
+            email: response.user?.email || "",
+          })
+        );
         // Redirect to dashboard
         router.push("/dashboard");
       } else {

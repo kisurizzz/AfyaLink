@@ -2,6 +2,7 @@
 
 import { Box, Container, Paper, Tabs, Tab } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
+import Navbar from "../components/Navbar";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function DashboardLayout({ children }) {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "white" }}>
+      <Navbar />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Paper sx={{ width: "100%", mb: 2 }}>
           <Tabs

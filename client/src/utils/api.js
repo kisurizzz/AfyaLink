@@ -8,10 +8,28 @@ const getHeaders = (token) => ({
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
+  console.log("Response status:", response.status);
+  console.log(
+    "Response headers:",
+    Object.fromEntries(response.headers.entries())
+  );
+
   const data = await response.json();
+  console.log("Response data:", data);
 
   if (!response.ok) {
-    throw new Error(data.error || "Request failed");
+    // Check if the response has an error message
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    // Check if the response has a message
+    if (data.message) {
+      throw new Error(data.message);
+    }
+    // If no specific error message, use the status text
+    throw new Error(
+      `Request failed: ${response.status} ${response.statusText}`
+    );
   }
 
   return data;
@@ -58,6 +76,10 @@ export const signup = async (username, password, email) => {
 
 // Client API calls
 export const getClients = async (token) => {
+  console.log("Making request to get clients");
+  console.log("Token being used:", token);
+  console.log("Headers:", getHeaders(token));
+
   const response = await fetch(`${API_URL}/clients`, {
     method: "GET",
     headers: getHeaders(token),
@@ -180,6 +202,33 @@ export const deleteEnrollment = async (clientId, programId, token) => {
       headers: getHeaders(token),
     }
   );
+
+  return handleResponse(response);
+};
+
+export const unenrollClient = async (clientId, programId, token) => {
+  const response = await fetch(
+    `${API_URL}/enrollments/${clientId}/${programId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return handleResponse(response);
+};
+
+export const logout = async (token) => {
+  const response = await fetch(`${API_URL}/doctors/logout`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
 
   return handleResponse(response);
 };

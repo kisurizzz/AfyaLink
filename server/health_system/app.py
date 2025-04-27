@@ -20,13 +20,27 @@ CORS(app) #Enable CORS for all routes
 #Configure the database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_system.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
-if not app.config['JWT_SECRET_KEY']:
-    raise ValueError("JWT_SECRET_KEY environment variable is not set")
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1) #This is the expiration time for the access token
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "your-secret-key")  # Provide a default for development
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
+app.config['JWT_TOKEN_LOCATION'] = ['headers']  # Look for tokens in headers
+app.config['JWT_HEADER_NAME'] = 'Authorization'  # Header name
+app.config['JWT_HEADER_TYPE'] = 'Bearer'  # Header type
 
 db.init_app(app)
 jwt = JWTManager(app)
+
+# JWT error handlers
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return {'error': 'Invalid token'}, 401
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_data):
+    return {'error': 'Token has expired'}, 401
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return {'error': 'Authorization token is missing'}, 401
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)

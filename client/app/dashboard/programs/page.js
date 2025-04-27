@@ -16,6 +16,7 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
 import { getPrograms } from "../../../src/utils/api";
 import { useRouter } from "next/navigation";
 
@@ -90,10 +91,18 @@ export default function ProgramsPage() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "white" }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Programs
           </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => router.push("/dashboard/programs/register")}
+          >
+            Register New Program
+          </Button>
         </Box>
 
         <TableContainer component={Paper}>

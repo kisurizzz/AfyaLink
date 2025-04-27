@@ -1,14 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import bcrypt
 
 
 db = SQLAlchemy()
 
 class SystemUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     role = db.Column(db.String(50), nullable=False, default='doctor')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
@@ -18,8 +19,18 @@ class SystemUser(db.Model):
     created_programs = db.relationship('Program', backref='creator', lazy=True)
     created_enrollments = db.relationship('Enrollment', backref='creator', lazy=True)
 
+    def set_password(self, password):
+        """Hash and set the user's password"""
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+        self.password = hashed_password.decode('utf-8')
+
+    def check_password(self, password):
+        """Check if the provided password matches the stored hash"""
+        return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
+
     def __repr__(self):
-        return f'<Doctor {self.username}>'
+        return f'<SystemUser {self.username}>'
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)

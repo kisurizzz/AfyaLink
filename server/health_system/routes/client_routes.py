@@ -272,6 +272,7 @@ class ClientSearchResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def get(self):
         """
         Search for clients by name or other criteria
@@ -325,6 +326,7 @@ class ClientProfileResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def get(self, client_id):
         """
         Get detailed client profile including enrolled programs
@@ -377,6 +379,7 @@ class ClientAPIResource(Resource):
             'data': data
         }, status_code
 
+    @jwt_required()
     def get(self, client_id):
         """
         External API endpoint for client information
@@ -424,6 +427,5 @@ api = Api()
 def init_client_routes(app):
     api.add_resource(ClientResource, '/api/clients', '/api/clients/<int:client_id>')
     api.add_resource(ClientSearchResource, '/api/clients/search')
-    api.add_resource(ClientProfileResource, '/api/clients/<int:client_id>')
     api.add_resource(ClientAPIResource, '/api/v1/clients/<int:client_id>')
     api.init_app(app) 

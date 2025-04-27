@@ -1,6 +1,6 @@
 from flask import request
 from flask_restful import Resource, Api, reqparse
-from models import db, Program
+from models import db, Program, Enrollment
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -180,6 +180,38 @@ class ProgramResource(Resource):
         except IntegrityError:
             db.session.rollback()
             return self.error_response("Program with this name already exists", 409)
+        except Exception as e:
+            db.session.rollback()
+            return self.error_response(str(e), 500)
+
+    @jwt_required()
+    def delete(self, program_id):
+        """
+        Delete a program
+        URL parameters:
+        - program_id: ID of the program to delete
+        """
+        try:
+            # Get the current user's ID
+            current_user_id = int(get_jwt_identity())
+            
+            # Find the program
+            program = Program.query.get(program_id)
+            if not program:
+                return self.error_response("Program not found", 404)
+            
+            # Delete all enrollments first (due to foreign key constraints)
+            Enrollment.query.filter_by(program_id=program_id).delete()
+            
+            # Delete the program
+            db.session.delete(program)
+            db.session.commit()
+            
+            return self.success_response(
+                None,
+                "Program successfully deleted",
+                200
+            )
         except Exception as e:
             db.session.rollback()
             return self.error_response(str(e), 500)

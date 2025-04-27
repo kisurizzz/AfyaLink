@@ -15,6 +15,10 @@ import {
   CardContent,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Description as DescriptionIcon,
@@ -22,8 +26,14 @@ import {
   People as PeopleIcon,
   ArrowBack as ArrowBackIcon,
   PersonAdd as PersonAddIcon,
+  PersonRemove as PersonRemoveIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { getProgramById } from "../../src/utils/api";
+import {
+  getProgramById,
+  unenrollClient,
+  deleteProgram,
+} from "../../src/utils/api";
 import { useRouter } from "next/navigation";
 
 export default function ProgramDetails({ programId }) {
@@ -31,6 +41,11 @@ export default function ProgramDetails({ programId }) {
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [unenrollDialogOpen, setUnenrollDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [unenrollLoading, setUnenrollLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchProgramDetails = async () => {
     try {
@@ -60,6 +75,56 @@ export default function ProgramDetails({ programId }) {
 
   const handleEnrollClick = () => {
     router.push(`/programs/${programId}/enroll`);
+  };
+
+  const handleUnenrollClick = (client) => {
+    setSelectedClient(client);
+    setUnenrollDialogOpen(true);
+  };
+
+  const handleUnenrollConfirm = async () => {
+    if (!selectedClient) return;
+
+    setUnenrollLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      await unenrollClient(selectedClient.id, programId, token);
+      setUnenrollDialogOpen(false);
+      // Refresh program details
+      fetchProgramDetails();
+    } catch (err) {
+      console.error("Error unenrolling client:", err);
+      setError(err.message || "Failed to unenroll client");
+    } finally {
+      setUnenrollLoading(false);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      await deleteProgram(programId, token);
+      router.push("/dashboard/programs");
+    } catch (err) {
+      console.error("Error deleting program:", err);
+      setError(err.message || "Failed to delete program");
+      setDeleteDialogOpen(false);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   if (loading) {
@@ -134,14 +199,24 @@ export default function ProgramDetails({ programId }) {
               Program Details
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<PersonAddIcon />}
-            onClick={handleEnrollClick}
-          >
-            Enroll Client
-          </Button>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<PersonAddIcon />}
+              onClick={handleEnrollClick}
+            >
+              Enroll Client
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleDeleteClick}
+            >
+              Delete Program
+            </Button>
+          </Box>
         </Box>
 
         <Grid container spacing={3}>
@@ -260,7 +335,7 @@ export default function ProgramDetails({ programId }) {
                             <Box
                               sx={{
                                 display: "flex",
-                                justifyContent: "flex-end",
+                                justifyContent: "space-between",
                                 alignItems: "center",
                                 mt: "auto",
                               }}
@@ -273,6 +348,15 @@ export default function ProgramDetails({ programId }) {
                                 }
                               >
                                 View Client
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<PersonRemoveIcon />}
+                                onClick={() => handleUnenrollClick(client)}
+                              >
+                                Unenroll
                               </Button>
                             </Box>
                           </CardContent>
@@ -299,6 +383,77 @@ export default function ProgramDetails({ programId }) {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Unenroll Confirmation Dialog */}
+      <Dialog
+        open={unenrollDialogOpen}
+        onClose={() => setUnenrollDialogOpen(false)}
+      >
+        <DialogTitle>Confirm Unenrollment</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to unenroll{" "}
+            {selectedClient
+              ? `${selectedClient.first_name} ${selectedClient.last_name}`
+              : "this client"}{" "}
+            from {program.name}?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setUnenrollDialogOpen(false)}
+            disabled={unenrollLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUnenrollConfirm}
+            color="error"
+            variant="contained"
+            disabled={unenrollLoading}
+            startIcon={unenrollLoading ? <CircularProgress size={20} /> : null}
+          >
+            {unenrollLoading ? "Unenrolling..." : "Unenroll"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Program Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirm Program Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the program "{program.name}"? This
+            action cannot be undone.
+            {program.clients?.length > 0 && (
+              <Typography color="error" sx={{ mt: 1 }}>
+                Warning: This program has {program.clients.length} enrolled
+                clients. Deleting the program will remove all enrollments.
+              </Typography>
+            )}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleteLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteLoading}
+            startIcon={deleteLoading ? <CircularProgress size={20} /> : null}
+          >
+            {deleteLoading ? "Deleting..." : "Delete Program"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

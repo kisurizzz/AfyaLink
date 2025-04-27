@@ -39,14 +39,23 @@ export default function ClientsPage() {
         setError(null);
 
         const token = localStorage.getItem("token");
+        console.log("Token from localStorage:", token);
+
         if (!token) {
           throw new Error("No authentication token found");
         }
 
+        console.log("Attempting to fetch clients...");
         const response = await getClients(token);
+        console.log("Received response:", response);
+
         setClients(response.data || []);
       } catch (err) {
         console.error("Error fetching clients:", err);
+        console.error("Error details:", {
+          message: err.message,
+          stack: err.stack,
+        });
         setError(err.message || "Failed to load clients");
       } finally {
         setLoading(false);
