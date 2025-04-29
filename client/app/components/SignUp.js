@@ -11,6 +11,7 @@ import {
   Link,
   IconButton,
   InputAdornment,
+  Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { signup } from "../../src/utils/api";
@@ -27,6 +28,8 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,18 +37,22 @@ export default function SignUp() {
       ...prev,
       [name]: value,
     }));
-    // Clear password error when user types
+    // Clear errors when user types
     if (name === "password" || name === "confirmPassword") {
       setPasswordError("");
     }
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setPasswordError("Passwords do not match");
+      setLoading(false);
       return;
     }
 
@@ -55,16 +62,18 @@ export default function SignUp() {
         formData.password,
         formData.email
       );
-      if (response.token) {
-        // Handle successful signup (e.g., store token, redirect)
-        console.log("Signup successful:", response);
+
+      if (response.message === "User created successfully") {
+        // Handle successful signup
         router.push("/login"); // Redirect to login page after successful signup
       } else {
-        // Handle signup error
-        console.error("Signup failed:", response.error);
+        setError("Signup failed. Please try again.");
       }
     } catch (error) {
       console.error("Error during signup:", error);
+      setError(error.message || "Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,6 +119,11 @@ export default function SignUp() {
             <Typography component="h2" variant="h5" align="center" gutterBottom>
               Create Account
             </Typography>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <TextField
                 margin="normal"
@@ -195,8 +209,9 @@ export default function SignUp() {
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
+                disabled={loading}
               >
-                Sign Up
+                {loading ? "Signing Up..." : "Sign Up"}
               </Button>
               <Box sx={{ textAlign: "center" }}>
                 <Link href="/login" variant="body2">

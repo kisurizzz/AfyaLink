@@ -63,15 +63,37 @@ export const login = async (username, password) => {
 };
 
 export const signup = async (username, password, email) => {
-  const response = await fetch(`${API_URL}/doctors`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, password, email }),
-  });
+  try {
+    const response = await fetch(`${API_URL}/doctors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password, email }),
+    });
 
-  return handleResponse(response);
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Check if the response has an error message
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      // Check if the response has a message
+      if (data.message) {
+        throw new Error(data.message);
+      }
+      // If no specific error message, use the status text
+      throw new Error(
+        `Request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Signup error:", error);
+    throw error;
+  }
 };
 
 // Client API calls

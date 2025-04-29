@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import {
   Box,
   Container,
@@ -21,6 +21,7 @@ export default function EnrollClientPage({ params }) {
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const programId = use(params).id;
 
   useEffect(() => {
     const fetchProgramDetails = async () => {
@@ -33,7 +34,7 @@ export default function EnrollClientPage({ params }) {
           throw new Error("No authentication token found");
         }
 
-        const response = await getProgramById(params.id, token);
+        const response = await getProgramById(programId, token);
         setProgram(response.data);
       } catch (err) {
         console.error("Error fetching program details:", err);
@@ -44,7 +45,7 @@ export default function EnrollClientPage({ params }) {
     };
 
     fetchProgramDetails();
-  }, [params.id]);
+  }, [programId]);
 
   if (loading) {
     return (
