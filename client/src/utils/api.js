@@ -1,4 +1,4 @@
-const API_URL = "https://afyalinkbackend.onrender.com";
+const API_URL = "https://afyalinkbackend.onrender.com/api";
 
 // Helper function to get headers with token
 const getHeaders = (token) => ({

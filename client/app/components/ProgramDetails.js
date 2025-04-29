@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -47,7 +47,7 @@ export default function ProgramDetails({ programId }) {
   const [unenrollLoading, setUnenrollLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchProgramDetails = async () => {
+  const fetchProgramDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -65,13 +65,13 @@ export default function ProgramDetails({ programId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [programId]);
 
   useEffect(() => {
     if (programId) {
       fetchProgramDetails();
     }
-  }, [programId]);
+  }, [programId, fetchProgramDetails]);
 
   const handleEnrollClick = () => {
     router.push(`/programs/${programId}/enroll`);
@@ -426,8 +426,8 @@ export default function ProgramDetails({ programId }) {
         <DialogTitle>Confirm Program Deletion</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the program "{program.name}"? This
-            action cannot be undone.
+            Are you sure you want to delete the program &quot;{program.name}
+            &quot;? This action cannot be undone.
             {program.clients?.length > 0 && (
               <Typography color="error" sx={{ mt: 1 }}>
                 Warning: This program has {program.clients.length} enrolled
