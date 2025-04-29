@@ -20,7 +20,7 @@ CORS(app) #Enable CORS for all routes
 #Configure the database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_system.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "your-secret-key")  # Provide a default for development
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 app.config['JWT_TOKEN_LOCATION'] = ['headers']  # Look for tokens in headers
 app.config['JWT_HEADER_NAME'] = 'Authorization'  # Header name
