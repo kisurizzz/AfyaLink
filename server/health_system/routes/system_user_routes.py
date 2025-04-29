@@ -3,7 +3,7 @@ from flask_restful import Resource, Api, reqparse
 from models import db, User
 import bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import os
 from sqlalchemy.exc import IntegrityError
