@@ -4,6 +4,7 @@ aniso8601==10.0.1
 blinker==1.9.0; python_version >= '3.9'
 click==8.1.8; python_version >= '3.7'
 flask==3.1.0; python_version >= '3.9'
+flask-cors==4.0.0; python_version >= '3.7'
 flask-migrate==4.1.0; python_version >= '3.6'
 flask-restful==0.3.10
 flask-sqlalchemy==3.1.1; python_version >= '3.8'
