@@ -1,14 +1,14 @@
 // AfyaLink Database Schema
 
-// SystemUser table
-Table SystemUser {
+// User table
+Table User {
   id integer [pk, increment]
   username varchar(80) [unique, not null]
   password varchar(120) [not null]
   email varchar(120) [unique, not null]
   role varchar(50) [not null, default: 'doctor']
-  created_at datetime [default: `now()`]
-  last_login datetime
+  created_at timestamp [default: `now()`]
+  last_login timestamp
 }
 
 // Client table
@@ -21,8 +21,8 @@ Table Client {
   contact_number varchar(15)
   email varchar(100)
   address varchar(200)
-  created_at datetime [default: `now()`]
-  created_by integer [ref: > SystemUser.id]
+  created_at timestamp [default: `now()`]
+  created_by integer [ref: > User.id]
 }
 
 // Program table
@@ -31,8 +31,8 @@ Table Program {
   name varchar(100) [unique, not null]
   description text
   duration integer [not null, default: 30]
-  created_at datetime [default: `now()`]
-  created_by integer [ref: > SystemUser.id]
+  created_at timestamp [default: `now()`]
+  created_by integer [ref: > User.id]
 }
 
 // Enrollment table
@@ -40,9 +40,9 @@ Table Enrollment {
   id integer [pk, increment]
   client_id integer [ref: > Client.id, not null]
   program_id integer [ref: > Program.id, not null]
-  enrollment_date datetime [default: `now()`]
+  enrollment_date timestamp [default: `now()`]
   status varchar(20) [default: 'Active']
-  created_by integer [ref: > SystemUser.id]
+  created_by integer [ref: > User.id]
 
   indexes {
     (client_id, program_id) [unique]

@@ -1,12 +1,13 @@
 from flask import request
 from flask_restful import Resource, Api, reqparse
-from models import db, SystemUser
+from models import db, User
 import bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 from datetime import datetime, timedelta, UTC
 from functools import wraps
 import os
 from sqlalchemy.exc import IntegrityError
+from marshmallow import Schema, fields, validate
 
 # Initialize API
 api = Api()
@@ -14,6 +15,15 @@ api = Api()
 # JWT configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # In production, use environment variable
 JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+
+# Schema for user data validation
+class UserSchema(Schema):
+    username = fields.Str(required=True, validate=validate.Length(min=3, max=80))
+    password = fields.Str(required=True, validate=validate.Length(min=6))
+    email = fields.Email(required=True)
+    role = fields.Str(validate=validate.OneOf(['doctor', 'admin', 'nurse']))
+
+user_schema = UserSchema()
 
 class SystemUserResource(Resource):
     def __init__(self):
@@ -46,11 +56,11 @@ class SystemUserResource(Resource):
             args = self.parser.parse_args()
             
             # Check if username already exists
-            if SystemUser.query.filter_by(username=args['username']).first():
+            if User.query.filter_by(username=args['username']).first():
                 return self.error_response("Username already exists", 409)
             
             # Create new user
-            user = SystemUser(
+            user = User(
                 username=args['username'],
                 email=args['email']
             )
@@ -104,7 +114,7 @@ class LoginResource(Resource):
                 return self.error_response("Username and password are required", 400)
             
             # Find user by username
-            user = SystemUser.query.filter_by(username=username).first()
+            user = User.query.filter_by(username=username).first()
             
             if not user or not user.check_password(password):
                 return self.error_response("Invalid username or password", 401)

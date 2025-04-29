@@ -5,7 +5,8 @@ import bcrypt
 
 db = SQLAlchemy()
 
-class SystemUser(db.Model):
+class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -30,7 +31,7 @@ class SystemUser(db.Model):
         return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
 
     def __repr__(self):
-        return f'<SystemUser {self.username}>'
+        return f'<User {self.username}>'
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,7 +43,7 @@ class Client(db.Model):
     email = db.Column(db.String(100))
     address = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('system_user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     # Relationship with programs through enrollments
     programs = db.relationship('Program', secondary='enrollment', back_populates='clients')
@@ -58,7 +59,7 @@ class Program(db.Model):
     description = db.Column(db.Text)
     duration = db.Column(db.Integer, nullable=False, default=30)  # Duration in days
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('system_user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     # Relationship with clients through enrollments
     clients = db.relationship('Client', secondary='enrollment', back_populates='programs')
@@ -73,7 +74,7 @@ class Enrollment(db.Model):
     program_id = db.Column(db.Integer, db.ForeignKey('program.id'), nullable=False)
     enrollment_date = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='Active')  # Active, Completed, Suspended
-    created_by = db.Column(db.Integer, db.ForeignKey('system_user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     # Ensure a client can only be enrolled once in a program
     __table_args__ = (db.UniqueConstraint('client_id', 'program_id'),)
