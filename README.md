@@ -2,6 +2,11 @@
 
 AfyaLink is a comprehensive healthcare management system designed to streamline patient and program management for healthcare providers. The system facilitates efficient client registration, program management, and enrollment tracking.
 
+## Live Demo
+
+- Frontend: [https://afya-link1.vercel.app](https://afya-link1.vercel.app)
+- Backend API: [https://afyalinkbackend.onrender.com](https://afyalinkbackend.onrender.com)
+
 ## Features
 
 - **User Management**
@@ -30,14 +35,17 @@ AfyaLink is a comprehensive healthcare management system designed to streamline 
 - React/Next.js
 - Material-UI
 - Modern JavaScript (ES6+)
+- Deployed on Vercel
 
 ### Backend
 - Flask (Python)
 - SQLAlchemy
 - JWT Authentication
+- Deployed on Render
 
 ### Database
-- SQLite with migration support
+- PostgreSQL (Production)
+- SQLite (Development)
 
 ## Prerequisites
 
@@ -71,6 +79,7 @@ pip install -r requirements.txt
 ```bash
 # Create a .env file in server/health_system
 JWT_SECRET_KEY=your_secret_key_here
+DATABASE_URI=your_database_uri_here
 ```
 
 5. Initialize the database:
@@ -171,6 +180,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Material-UI for the frontend components
 - Flask and SQLAlchemy for the backend framework
 - Next.js for the frontend framework
+- Vercel for frontend hosting
+- Render for backend hosting
+- PostgreSQL for database hosting
 
 ## Contact
 
