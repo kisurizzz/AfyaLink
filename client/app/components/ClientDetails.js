@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -40,7 +40,7 @@ export default function ClientDetails({ clientId }) {
   const [isEditing, setIsEditing] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const fetchClientDetails = async () => {
+  const fetchClientDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -58,13 +58,13 @@ export default function ClientDetails({ clientId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId]);
 
   useEffect(() => {
     if (clientId) {
       fetchClientDetails();
     }
-  }, [clientId]);
+  }, [clientId, fetchClientDetails]);
 
   const handleEditClick = () => {
     setIsEditing(true);
